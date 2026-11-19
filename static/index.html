@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>سندخوان</title>
+  <style>
+    :root { font-family: Segoe UI, Tahoma, sans-serif; color: #17243a; background: #f4f5f0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 20px; }
+    main { max-width: 1300px; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #d9dcd2; padding-bottom: 14px; margin-bottom: 18px; }
+    h1 { margin: 0; font-size: 1.7rem; } h2 { font-size: 1.1rem; margin-top: 0; }
+    .layout { display: grid; grid-template-columns: 360px 1fr; gap: 18px; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    .card { background: white; border: 1px solid #d9dcd2; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+    label { display: block; font-weight: 700; margin-bottom: 8px; }
+    select, button { width: 100%; padding: 10px; border-radius: 7px; border: 1px solid #cbd0c6; font: inherit; }
+    button { cursor: pointer; font-weight: 700; background: #17243a; color: white; border-color: #17243a; }
+    button.secondary { background: #eef4f0; color: #2e6e4e; border-color: #2e6e4e; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .dropzone { border: 2px dashed #cbd0c6; border-radius: 10px; padding: 28px 12px; text-align: center; cursor: pointer; }
+    .dropzone.dragover { border-color: #b23a2f; background: #fdf3f2; }
+    .hint { color: #596780; font-size: .85rem; line-height: 1.8; }
+    .options { display: grid; gap: 10px; margin: 14px 0; }
+    .options label { font-weight: 500; display: flex; gap: 8px; align-items: center; }
+    .options input { width: 18px; height: 18px; }
+    .canvas-wrap { overflow: hidden; border: 1px solid #cbd0c6; border-radius: 8px; background: #222; text-align: center; }
+    canvas { display: block; max-width: 100%; height: auto; margin: auto; cursor: crosshair; }
+    .stage { display: none; } .stage.active { display: block; }
+    .progress { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 18px; direction: rtl; }
+    .progress-step { position: relative; display: flex; align-items: center; gap: 8px; color: #8a9389; font-size: .82rem; font-weight: 700; }
+    .progress-step:not(:last-child)::after { content: ""; height: 2px; flex: 1; background: #d9dcd2; }
+    .progress-step.active, .progress-step.done { color: #2e6e4e; }
+    .progress-step.active .progress-dot, .progress-step.done .progress-dot { background: #2e6e4e; color: white; border-color: #2e6e4e; }
+    .progress-dot { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px; border: 2px solid #cbd0c6; border-radius: 50%; background: white; }
+    .step-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .step-actions button { width: auto; min-width: 130px; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    .toolbar button { width: auto; }
+    .region-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .region-chip { background: #f4f5f0; color: #17243a; border: 1px solid #cbd0c6; width: auto; padding: 5px 9px; }
+    .preview img { max-width: 100%; max-height: 520px; display: block; margin: auto; border: 1px solid #cbd0c6; }
+    .loading, .error, #results { display: none; }
+    .loading.active, .error.active, #results.active { display: block; }
+    .error { color: #b23a2f; background: #fdf3f2; border: 1px solid #e7c4c0; padding: 10px; border-radius: 7px; margin-top: 10px; }
+    .field { display: grid; grid-template-columns: 130px 1fr auto; gap: 10px; align-items: center; padding: 10px; border-bottom: 1px solid #e5e7e1; }
+    .field strong { color: #596780; } .field span { direction: ltr; unicode-bidi: plaintext; overflow-wrap: anywhere; }
+    .copy-btn { width: auto; padding: 6px 10px; background: #eef4f0; color: #2e6e4e; border-color: #2e6e4e; font-size: .82rem; }
+    @media (max-width: 620px) { .progress-step { gap: 3px; font-size: .68rem; } .progress-step:not(:last-child)::after { display: none; } .field { grid-template-columns: 1fr auto; } .field strong { grid-column: 1 / -1; } }
+    textarea { width: 100%; min-height: 180px; margin-top: 12px; font: inherit; padding: 10px; }
+
+    /* Document workspace */
+    :root { color: #172b3a; background: #f3f6f5; font-family: Tahoma, Segoe UI, sans-serif; }
+    body { padding: 32px 24px 56px; background: radial-gradient(circle at 95% 0%, #dcece6 0, transparent 31%), #f3f6f5; }
+    main { max-width: 1240px; }
+    header { align-items: center; border: 0; padding: 0 0 24px; margin: 0; }
+    h1 { font-size: 1.9rem; letter-spacing: -.04em; color: #173d37; }
+    header .hint { background: #e4f0eb; color: #32695c; border: 1px solid #cbe2d7; padding: 8px 14px; border-radius: 99px; font-size: .78rem; }
+    h2 { color: #173d37; font-size: 1.12rem; margin-bottom: 8px; }
+    .layout { grid-template-columns: 340px minmax(0, 1fr); gap: 20px; align-items: start; }
+    .card { border: 1px solid #dce7e2; border-radius: 18px; padding: 22px; margin-bottom: 18px; box-shadow: 0 10px 30px rgba(29, 62, 52, .045); }
+    label { color: #24483f; font-size: .92rem; }
+    select, button { min-height: 46px; border-radius: 10px; transition: background .18s, border-color .18s, box-shadow .18s; }
+    select { background: #fff; color: #183b34; border-color: #cbded6; }
+    button { background: #176b59; border-color: #176b59; }
+    button:hover:not(:disabled) { background: #115748; border-color: #115748; }
+    button.secondary, .copy-btn { background: #edf6f2; color: #176b59; border-color: #c5e0d4; }
+    button.secondary:hover:not(:disabled), .copy-btn:hover:not(:disabled) { background: #dcefe6; border-color: #9ecab7; }
+    :focus-visible { outline: 3px solid #e5a340; outline-offset: 3px; }
+    .dropzone { border: 1.5px dashed #98bdb0; border-radius: 14px; padding: 30px 14px; color: #20594b; background: #f5faf7; line-height: 2; }
+    .dropzone:hover, .dropzone.dragover { border-color: #176b59; background: #e9f5ee; }
+    .hint { color: #698078; font-size: .83rem; }
+    .options { gap: 12px; margin: 18px 0; }
+    .options input { accent-color: #176b59; }
+    .canvas-wrap { min-height: 280px; display: grid; place-items: center; border-color: #d7e3de; border-radius: 12px; background: #edf2ef; }
+    canvas { max-height: 620px; }
+    .progress { padding: 18px 22px; margin-bottom: 22px; border: 1px solid #dce7e2; border-radius: 15px; background: rgba(255,255,255,.82); }
+    .progress-step { color: #91a29b; }
+    .progress-step:not(:last-child)::after { background: #dce7e2; }
+    .progress-step.active, .progress-step.done { color: #176b59; }
+    .progress-step.active .progress-dot, .progress-step.done .progress-dot { background: #176b59; border-color: #176b59; }
+    .progress-dot { width: 34px; height: 34px; flex-basis: 34px; border-color: #d5e2dc; }
+    .step-actions, .toolbar { gap: 10px; margin-top: 18px; }
+    .region-chip { background: #f3f8f5; color: #24574a; border-color: #d2e4da; min-height: 36px; }
+    .preview img { border: 1px solid #dce7e2; border-radius: 10px; }
+    .loading { color: #176b59; padding: 12px 0 2px; }
+    .error { color: #9d312b; background: #fff3f1; border-color: #f0c9c3; }
+    .field { border-color: #e6eeea; }
+    .field strong { color: #5d786d; }
+    textarea { border: 1px solid #d2e2da; border-radius: 10px; color: #243f36; background: #f8fbf9; line-height: 1.8; resize: vertical; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 620px) { body { padding: 20px 14px 36px; } header { gap: 12px; } h1 { font-size: 1.55rem; } header .hint { font-size: .68rem; } .card { padding: 16px; } .progress { padding: 14px 10px; gap: 4px; } .progress-step { flex-direction: column; text-align: center; } .step-actions button { min-width: 0; flex: 1; } .canvas-wrap { min-height: 180px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header><div><h1>سندخوان</h1><div class="hint">از تصویر سند تا اطلاعات قابل استفاده</div></div><span class="hint">دستیار استخراج اطلاعات</span></header>
+  <nav class="progress" aria-label="مراحل پردازش سند">
+    <div class="progress-step active" data-step="1"><span class="progress-dot">۱</span><span>تصویر و قاب</span></div>
+    <div class="progress-step" data-step="2"><span class="progress-dot">۲</span><span>نواحی مهم</span></div>
+    <div class="progress-step" data-step="3"><span class="progress-dot">۳</span><span>تصویر نهایی</span></div>
+    <div class="progress-step" data-step="4"><span class="progress-dot">۴</span><span>استخراج</span></div>
+  </nav>
+  <div class="layout">
+    <section>
+      <div class="card">
+        <label for="docType">نوع سند</label>
+        <select id="docType"></select>
+      </div>
+      <div class="card">
+        <div class="dropzone" id="dropzone" tabindex="0">
+          <div>تصویر سند را انتخاب کنید یا اینجا رها کنید</div>
+          <div class="hint">امکان Paste تصویر با Ctrl+V نیز وجود دارد</div>
+          <input id="fileInput" type="file" accept="image/*,.heic,.heif" hidden>
+        </div>
+        <div class="options" id="options" style="display:none">
+          <label><input id="regionMode" type="checkbox"> انتخاب نواحی مهم</label>
+          <label><input id="enhanceMode" type="checkbox"> بهبود کیفیت تصویر نهایی</label>
+          <label><input id="showLabels" type="checkbox"> نمایش شماره روی نواحی</label>
+        </div>
+        <button class="secondary" id="composeBtn" type="button" disabled>ساخت تصویر نهایی</button>
+        <button id="extractBtn" type="button" disabled style="margin-top:8px">استخراج اطلاعات</button>
+        <div class="loading" id="loading">در حال آماده‌سازی...</div>
+        <div class="error" id="errorBox"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="card stage active" id="cropStage">
+        <h2>مرحله ۱: انتخاب قاب کلی سند</h2>
+        <p class="hint">با کشیدن موس قاب سند را مشخص کنید. اگر لازم نیست، کل تصویر را نگه دارید.</p>
+        <div class="canvas-wrap"><canvas id="documentCropCanvas"></canvas></div>
+        <div class="toolbar"><button class="secondary" id="fullCropBtn" type="button">استفاده از کل تصویر</button></div>
+        <div class="step-actions"><button class="secondary" id="cropNextBtn" type="button">ادامه</button></div>
+      </div>
+
+      <div class="card stage" id="regionStage">
+        <h2>مرحله ۲: انتخاب نواحی مهم</h2>
+        <p class="hint">اختیاری است. روی تصویر crop‌شده مستطیل بکشید؛ هر مستطیل یک قطعه از تصویر نهایی خواهد بود.</p>
+        <div class="canvas-wrap"><canvas id="regionCanvas"></canvas></div>
+        <div class="toolbar"><button class="secondary" id="clearRegionsBtn" type="button">حذف همه نواحی</button></div>
+        <div class="region-list" id="regionList"></div>
+        <div class="step-actions"><button class="secondary" id="regionBackBtn" type="button">بازگشت</button><button id="regionNextBtn" type="button">ساخت تصویر نهایی</button></div>
+      </div>
+
+      <div class="card preview" id="finalStage" style="display:none">
+        <h2>مرحله ۳: تصویر آماده استخراج</h2>
+        <img id="finalImage" alt="تصویر نهایی آماده استخراج">
+        <div class="step-actions"><button class="secondary" id="finalBackBtn" type="button">بازگشت</button></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" id="results">
+    <h2>نتیجهٔ استخراج: <span id="resultTitle"></span></h2>
+    <div id="fieldsList"></div>
+    <textarea id="rawText" readonly></textarea>
+  </section>
+</main>
+<script>
+(function () {
+  "use strict";
+  const MAX_SIZE = 10 * 1024 * 1024;
+  const docType = document.getElementById("docType");
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("fileInput");
+  const options = document.getElementById("options");
+  const regionMode = document.getElementById("regionMode");
+  const enhanceMode = document.getElementById("enhanceMode");
+  const showLabels = document.getElementById("showLabels");
+  const composeBtn = document.getElementById("composeBtn");
+  const extractBtn = document.getElementById("extractBtn");
+  const documentCropCanvas = document.getElementById("documentCropCanvas");
+  const regionCanvas = document.getElementById("regionCanvas");
+  const cropStage = document.getElementById("cropStage");
+  const regionStage = document.getElementById("regionStage");
+  const finalStage = document.getElementById("finalStage");
+  const finalImage = document.getElementById("finalImage");
+  const regionList = document.getElementById("regionList");
+  const loading = document.getElementById("loading");
+  const errorBox = document.getElementById("errorBox");
+  const results = document.getElementById("results");
+  const resultTitle = document.getElementById("resultTitle");
+  const fieldsList = document.getElementById("fieldsList");
+  const rawText = document.getElementById("rawText");
+  const progressSteps = [...document.querySelectorAll(".progress-step")];
+  const cropNextBtn = document.getElementById("cropNextBtn");
+  const regionBackBtn = document.getElementById("regionBackBtn");
+  const regionNextBtn = document.getElementById("regionNextBtn");
+  const finalBackBtn = document.getElementById("finalBackBtn");
+  let currentStep = 1;
+  let originalFile = null, sourceImage = null, composedFile = null;
+  let documentCrop = { x: 0, y: 0, width: 1, height: 1 }, regions = [];
+  let drawing = null;
+
+  fetch("/api/document-types").then((r) => r.json()).then((types) => {
+    types.forEach((item) => { const option = document.createElement("option"); option.value = item.doc_type; option.textContent = item.title; docType.appendChild(option); });
+  }).catch(() => showError("دریافت انواع سند ناموفق بود."));
+
+  dropzone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => { if (fileInput.files[0]) loadFile(fileInput.files[0]); fileInput.value = ""; });
+  ["dragover", "dragenter"].forEach((name) => dropzone.addEventListener(name, (event) => { event.preventDefault(); dropzone.classList.add("dragover"); }));
+  ["dragleave", "drop"].forEach((name) => dropzone.addEventListener(name, (event) => { event.preventDefault(); dropzone.classList.remove("dragover"); }));
+  dropzone.addEventListener("drop", (event) => { if (event.dataTransfer.files[0]) loadFile(event.dataTransfer.files[0]); });
+  document.addEventListener("paste", (event) => { const item = [...(event.clipboardData?.items || [])].find((x) => x.type.startsWith("image/")); if (item) loadFile(item.getAsFile()); });
+
+  function loadFile(file) {
+    if (!file || (!file.type.startsWith("image/") && !/\.(heic|heif)$/i.test(file.name || ""))) return showError("فقط فایل تصویری پذیرفته می‌شود.");
+    if (file.size > MAX_SIZE) return showError("حجم تصویر نباید بیشتر از ۱۰ مگابایت باشد.");
+    originalFile = file; composedFile = null; regions = []; documentCrop = { x: 0, y: 0, width: 1, height: 1 };
+    const image = new Image(); image.onload = () => { sourceImage = image; drawCrop(); options.style.display = "grid"; composeBtn.disabled = false; extractBtn.disabled = true; results.classList.remove("active"); setStep(1); };
+    image.src = URL.createObjectURL(file); hideError();
+  }
+
+  document.getElementById("fullCropBtn").addEventListener("click", () => { documentCrop = { x: 0, y: 0, width: 1, height: 1 }; regions = []; invalidatePreview(); drawCrop(); if (regionMode.checked) drawRegionCanvas(); });
+  regionMode.addEventListener("change", () => { invalidatePreview(); if (regionMode.checked) { drawRegionCanvas(); setStep(2); } else setStep(1); });
+  enhanceMode.addEventListener("change", invalidatePreview);
+  document.getElementById("clearRegionsBtn").addEventListener("click", () => { regions = []; invalidatePreview(); drawRegionCanvas(); });
+  documentCropCanvas.addEventListener("pointerdown", (event) => startDrawing(event, documentCropCanvas, (rect) => { documentCrop = rect; regions = []; invalidatePreview(); drawCrop(); if (regionMode.checked) drawRegionCanvas(); }));
+  regionCanvas.addEventListener("pointerdown", (event) => { if (!regionMode.checked) return; startDrawing(event, regionCanvas, (rect) => { regions.push(rect); invalidatePreview(); drawRegionCanvas(); }); });
+  cropNextBtn.addEventListener("click", () => regionMode.checked ? setStep(2) : composeBtn.click());
+  regionBackBtn.addEventListener("click", () => setStep(1));
+  regionNextBtn.addEventListener("click", () => composeBtn.click());
+  finalBackBtn.addEventListener("click", () => setStep(regionMode.checked ? 2 : 1));
+
+  function startDrawing(event, canvas, done) {
+    if (!sourceImage) return; const point = canvasPoint(event, canvas); drawing = { start: point, current: point, canvas, done }; canvas.setPointerCapture(event.pointerId);
+    const move = (moveEvent) => { drawing.current = canvasPoint(moveEvent, canvas); drawCrop(); if (canvas === regionCanvas) drawRegionCanvas(); };
+    const end = () => { if (!drawing) return; const rect = rectangle(drawing.start, drawing.current); const finish = drawing.done; drawing = null; finish(rect); canvas.removeEventListener("pointermove", move); canvas.removeEventListener("pointerup", end); };
+    canvas.addEventListener("pointermove", move); canvas.addEventListener("pointerup", end, { once: true });
+  }
+
+  function drawCrop() {
+    if (!sourceImage) return; sizeCanvas(documentCropCanvas, sourceImage); const ctx = documentCropCanvas.getContext("2d"); ctx.drawImage(sourceImage, 0, 0, documentCropCanvas.width, documentCropCanvas.height); drawRect(ctx, documentCrop, "#b23a2f");
+    if (drawing?.canvas === documentCropCanvas) drawRect(ctx, rectangle(drawing.start, drawing.current), "#2e6e4e");
+  }
+  function drawRegionCanvas() {
+    if (!sourceImage) return; const crop = imageRect(sourceImage, documentCrop); sizeCanvas(regionCanvas, { naturalWidth: crop.width, naturalHeight: crop.height }); const ctx = regionCanvas.getContext("2d"); ctx.drawImage(sourceImage, crop.x, crop.y, crop.width, crop.height, 0, 0, regionCanvas.width, regionCanvas.height); regions.forEach((rect, i) => { drawRect(ctx, rect, "#2e6e4e"); if (showLabels.checked) { ctx.fillStyle = "white"; ctx.fillRect(rect.x * regionCanvas.width, rect.y * regionCanvas.height, 28, 22); ctx.fillStyle = "black"; ctx.fillText(String(i + 1), rect.x * regionCanvas.width + 8, rect.y * regionCanvas.height + 16); } }); if (drawing?.canvas === regionCanvas) drawRect(ctx, rectangle(drawing.start, drawing.current), "#b23a2f"); renderRegionList();
+  }
+  showLabels.addEventListener("change", () => { invalidatePreview(); drawRegionCanvas(); });
+  function renderRegionList() { regionList.innerHTML = ""; regions.forEach((_, i) => { const button = document.createElement("button"); button.className = "region-chip"; button.type = "button"; button.textContent = "ناحیه " + (i + 1) + " ×"; button.onclick = () => { regions.splice(i, 1); invalidatePreview(); drawRegionCanvas(); }; regionList.appendChild(button); }); }
+  function sizeCanvas(canvas, image) { const scale = Math.min(1, 760 / image.naturalWidth, 520 / image.naturalHeight); canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale)); }
+  function canvasPoint(event, canvas) { const rect = canvas.getBoundingClientRect(); return { x: clamp((event.clientX - rect.left) / rect.width, 0, 1), y: clamp((event.clientY - rect.top) / rect.height, 0, 1) }; }
+  function rectangle(a, b) { return { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), width: Math.max(.01, Math.abs(a.x - b.x)), height: Math.max(.01, Math.abs(a.y - b.y)) }; }
+  function drawRect(ctx, rect, color) { ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(rect.x * ctx.canvas.width, rect.y * ctx.canvas.height, rect.width * ctx.canvas.width, rect.height * ctx.canvas.height); }
+  function imageRect(image, rect) { return { x: rect.x * image.naturalWidth, y: rect.y * image.naturalHeight, width: rect.width * image.naturalWidth, height: rect.height * image.naturalHeight }; }
+  function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+  function invalidatePreview() { composedFile = null; finalStage.style.display = "none"; extractBtn.disabled = true; results.classList.remove("active"); }
+  function setStep(step) {
+    currentStep = step;
+    progressSteps.forEach((item) => { const number = Number(item.dataset.step); item.classList.toggle("active", number === step); item.classList.toggle("done", number < step); });
+    cropStage.classList.toggle("active", step === 1);
+    regionStage.classList.toggle("active", step === 2 && regionMode.checked);
+    finalStage.classList.toggle("active", step === 3 || step === 4);
+    finalStage.style.display = step === 3 || step === 4 ? "block" : "none";
+  }
+
+  composeBtn.addEventListener("click", async () => {
+    if (!originalFile) return; setLoading(true, "در حال ساخت تصویر نهایی...");
+    try {
+      const form = new FormData(); form.append("file", originalFile, originalFile.name || "input.jpg"); form.append("document_crop", JSON.stringify(documentCrop)); form.append("regions", JSON.stringify(regionMode.checked ? regions : [])); form.append("enhance", String(enhanceMode.checked)); form.append("show_labels", String(showLabels.checked));
+      const response = await fetch("/api/compose", { method: "POST", body: form }); const body = await response.json(); if (!response.ok) throw new Error(body.detail || "ساخت تصویر نهایی ناموفق بود.");
+      composedFile = base64ToFile(body.image_b64, "composed.jpg"); finalImage.src = URL.createObjectURL(composedFile); extractBtn.disabled = false; setStep(3);
+    } catch (error) { showError(error.message); } finally { setLoading(false); }
+  });
+
+  extractBtn.addEventListener("click", async () => {
+    if (!composedFile) return showError("ابتدا تصویر نهایی را بسازید."); setLoading(true, "در حال استخراج مستقیم با مدل Vision...");
+    try { const form = new FormData(); form.append("file", composedFile, "composed.jpg"); form.append("doc_type", docType.value || "auto"); const response = await fetch("/api/extract", { method: "POST", body: form }); const body = await response.json(); if (!response.ok) throw new Error(body.detail || "استخراج ناموفق بود."); renderResult(body); setStep(4); } catch (error) { showError(error.message); } finally { setLoading(false); }
+  });
+  function renderResult(data) { resultTitle.textContent = data.title; fieldsList.innerHTML = data.fields.length ? data.fields.map((field) => `<div class="field"><strong>${escapeHtml(field.label)}</strong><span>${escapeHtml(field.value)}</span><button class="copy-btn" type="button" data-copy="${escapeHtml(field.value)}" onclick="window.copyField(this)">کپی</button></div>`).join("") : "<p class=hint>فیلد قطعی خوانده نشد.</p>"; rawText.value = data.raw_text || ""; results.classList.add("active"); }
+  function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[char])); }
+  function base64ToFile(value, name) { const binary = atob(value), bytes = new Uint8Array(binary.length); for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i); return new File([bytes], name, { type: "image/jpeg" }); }
+  window.copyField = async function (button) { try { await navigator.clipboard.writeText(button.dataset.copy || ""); const old = button.textContent; button.textContent = "کپی شد"; setTimeout(() => { button.textContent = old; }, 1200); } catch (_) { showError("کپی مقدار ممکن نشد؛ متن را دستی انتخاب کنید."); } };
+  function setLoading(active, text) { loading.textContent = text || "در حال پردازش..."; loading.classList.toggle("active", active); composeBtn.disabled = active || !originalFile; extractBtn.disabled = active || !composedFile; }
+  function showError(message) { errorBox.textContent = message; errorBox.classList.add("active"); }
+  function hideError() { errorBox.classList.remove("active"); }
+})();
+</script>
+</body>
+</html>
